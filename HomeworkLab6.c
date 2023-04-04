@@ -45,7 +45,7 @@
                 printf("Last time the file was modified:%s",ctime(&buf->st_mtime));
                 break;
 
-                case 'l':
+                case 'h':
                 printf("The file named %s has %d hard links",filename,buf->st_nlink);
                 break;
 
