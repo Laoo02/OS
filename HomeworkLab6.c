@@ -45,9 +45,12 @@
                 printf("Last time the file was modified:%s",ctime(&buf->st_mtime));
                 break;
 
-                case 'l':
+                case 'h':
                 printf("The file named %s has %d hard links",filename,buf->st_nlink);
                 break;
+
+                case 'l':
+                create_SL(filename);
 
                 default:
                 printf("invalid input!\n");
@@ -71,6 +74,21 @@
               printf( (mode & S_IROTH) ? "Read:yes\n" : "Read:no\n");
               printf( (mode & S_IWOTH) ? "Write:yes\n" : "Write:no\n");
               printf( (mode & S_IXOTH) ? "Execution:yes\n" : "Execution:no\n");
+    }
+
+    void create_SL(char filename[50])
+    {
+        char SL_name[50];
+        printf("Choose a softlink file name:");
+        scanf("%s",&SL_name);
+       /* printf("\n");
+        printf("file name:%s\n",SL_name);*/
+        //int Sl_test=symlink(filename,SL_name);
+        if(Sl_test == 0)
+        {
+            printf("Soft link added!");
+        }
+
     }
 
 
