@@ -62,7 +62,6 @@ void options(char filename[50], char option[10])
             break;
 
         case 'm':
-            // last_modified(buf->st_mtime);
             printf("Last time the file was modified:%s", ctime(&buf->st_mtime));
             break;
 
