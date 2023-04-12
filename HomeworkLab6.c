@@ -6,41 +6,84 @@
 #include <sys/types.h>
 #include <time.h>
 
-/* void FileType(char var,char filename[50],char option[10])
- {
-     if(var =='d')
-     {
-         directory(filename,option);
-     }
- }
+struct stat *buf;
+// buf = malloc(sizeof(struct stat));
 
+void fileType(char filename[50], char option[10])
+{
+    buf = malloc(sizeof(struct stat));
 
- void directory(char filename[50],char option[10])
- {
-     if(DIR *opendir(filename) ==NULL)
-     {
-         printf("Could not open the %s directory!\n",filename);
-         exit(1);
-     }
+    if (stat(filename, buf) < 0)
+    {
+        printf("Error!Cannot read file permissions!\n");
+        exit(1);
+    }
+    if (S_ISREG(buf->st_mode) != 0)
+    {
+        free(buf);
+        printf("The file read is a regular file!\n");
+        reg_Menu(filename, option);
+        regFile_options(filename, option);
+    }
+    else if (S_ISLNK(buf->st_mode) != 0)
+    {
+        printf("The file read is a symbolic link!\n");
+        free(buf);
+        symLnk_Menu();
+    }
+    else if (S_ISDIR(buf->st_mode) != 0)
+    {
+        printf("The file read is a directory!\n");
+        free(buf);
+        symLnk_Menu();
+    }
+    else
+    {
+        printf("undetected file type!\n");
+        free(buf);
+        exit(1);
+    }
+}
 
-     struct dirent *readdir(DIR *dirp);
-
- }*/
-
-void menu(char filename[50], char option[10])
+void symLnk_Menu()
 {
     printf("--MENU--\n");
     printf("Options:\n");
     printf("name:n\n");
     printf("last modified:m\n");
     printf("a:access\n");
+    printf("l:delete symlink\n");
+    printf("t:size of target file\n");
     printf("***********************************************************************\n");
-    options(filename, option);
 }
 
-void options(char filename[50], char option[10])
+void reg_Menu(char filename[50], char option[10])
 {
-    struct stat *buf;
+    printf("--MENU--\n");
+    printf("Options:\n");
+    printf("name:n\n");
+    printf("last modified:m\n");
+    printf("a:access\n");
+    printf("l:create symlink\n");
+    printf("d:file size\n");
+    printf("***********************************************************************\n");
+}
+
+/*void dir_Options(char filename[50],char option[10])
+{
+    if(DIR *opendir(filename) ==NULL)
+    {
+        printf("Could not open the %s directory!\n",filename);
+        exit(1);
+    }
+
+    struct dirent *readdir(DIR *dirp);
+
+}*/
+
+void regFile_options(char filename[50], char option[10])
+{
+    // struct stat *buf;
     buf = malloc(sizeof(struct stat));
 
     if (stat(filename, buf) < 0)
@@ -79,6 +122,8 @@ void options(char filename[50], char option[10])
         }
         printf("***********************************************************************\n");
     }
+
+    free(buf);
 }
 
 void permissions(unsigned short mode)
@@ -118,13 +163,8 @@ int main(int argc, char *argv[])
     {
         printf("Too few arguments provided!\n");
     }
-    /* else if(argc ==4)
-     {
-         FileType(argv[4]);
-     }*/
-    else
+    else if (argc == 3)
     {
-        menu(argv[1], argv[2]);
-        // options(argv[1],argv[2]);
+        fileType(argv[1], argv[2]);
     }
 }
