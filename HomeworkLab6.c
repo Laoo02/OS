@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
+#define _POSIX_SOURCE
+#include <dirent.h>
 
 struct stat *buf;
 // buf = malloc(sizeof(struct stat));
@@ -13,7 +15,7 @@ void fileType(char filename[50], char option[10])
 {
     buf = malloc(sizeof(struct stat));
 
-    if (stat(filename, buf) < 0)
+    if (lstat(filename, buf) < 0)
     {
         printf("Error!Cannot read file permissions!\n");
         exit(1);
@@ -30,12 +32,14 @@ void fileType(char filename[50], char option[10])
         printf("The file read is a symbolic link!\n");
         free(buf);
         symLnk_Menu();
+        symLnk_options(filename, option);
     }
     else if (S_ISDIR(buf->st_mode) != 0)
     {
         printf("The file read is a directory!\n");
         free(buf);
-        symLnk_Menu();
+        dir_Menu();
+        dir_options(filename, option);
     }
     else
     {
@@ -69,17 +73,58 @@ void reg_Menu(char filename[50], char option[10])
     printf("***********************************************************************\n");
 }
 
-/*void dir_Options(char filename[50],char option[10])
+void dir_Menu(char filename[50], char option[10])
 {
-    if(DIR *opendir(filename) ==NULL)
+    printf("--MENU--\n");
+    printf("Options:\n");
+    printf("name:n\n");
+    printf("a:access rights\n");
+    printf("d:size\n");
+    printf("c:prints the number of files with the .c extension\n");
+    printf("***********************************************************************\n");
+}
+
+void dir_options(char filename[50], char option[10])
+{
+    if (opendir(filename) == NULL)
     {
-        printf("Could not open the %s directory!\n",filename);
+        printf("Could not open the %s directory!\n", filename);
         exit(1);
     }
 
-    struct dirent *readdir(DIR *dirp);
+    buf = malloc(sizeof(struct stat));
 
-}*/
+    struct dirent *readdir(DIR * dirp);
+
+    for (int i = 1; i < strlen(option); i++)
+    {
+        switch (option[i])
+        {
+        case 'n':
+            printf("The name is:%s\n", filename);
+            break;
+
+        case 'a':
+            permissions(buf->st_mode);
+            break;
+
+        case 'c':
+            no_of_cFiles(filename);
+            break;
+
+        case 'd':
+            printf("the file has the size: %lf bytes", (double)buf->st_size);
+            break;
+
+        default:
+            printf("invalid input!\n");
+            break;
+        }
+        printf("***********************************************************************\n");
+    }
+    closedir(filename);
+    free(buf);
+}
 
 void regFile_options(char filename[50], char option[10])
 {
@@ -115,6 +160,56 @@ void regFile_options(char filename[50], char option[10])
         case 'l':
             create_SL(filename);
             break;
+
+        case 'd':
+            printf("the file has the size: %lf bytes", (double)buf->st_size);
+            break;
+
+        default:
+            printf("invalid input!\n");
+            break;
+        }
+        printf("***********************************************************************\n");
+    }
+
+    free(buf);
+}
+
+void symLnk_options(char filename[50], char option[10])
+{
+    buf = malloc(sizeof(struct stat));
+
+    if (lstat(filename, buf) < 0)
+    {
+        printf("Error!Cannot read file permissions!\n");
+        exit(1);
+    }
+
+    for (int i = 1; i < strlen(option); i++)
+    {
+        switch (option[i])
+        {
+        case 'n':
+            printf("The name is:%s\n", filename);
+            break;
+
+        case 'a':
+            permissions(buf->st_mode);
+            break;
+
+        case 'm':
+            printf("Last time the file was modified:%s", ctime(&buf->st_mtime));
+            break;
+
+        case 'l':
+            delete_SL(filename);
+            break;
+
+        case 'd':
+            printf("the file has the size: %lf bytes", (double)buf->st_size);
+            break;
+
+        case 't':
 
         default:
             printf("invalid input!\n");
@@ -155,6 +250,53 @@ void create_SL(char filename[50])
     {
         printf("Soft link added!");
     }
+}
+
+void delete_SL(char filename[50])
+{
+    if (unlink(filename) == 0)
+    {
+        printf("symlink successfully deleted!\n");
+    }
+    else
+    {
+        printf("cannot delete symlink!\n");
+    }
+}
+
+void no_of_cFiles(char filename[50])
+{
+    int count = 0;
+
+    if (opendir(filename) == NULL)
+    {
+        printf("Could not open the %s directory!\n", filename);
+        exit(1);
+    }
+
+    struct dirent *entry;
+
+    printf("The .c files are:");
+
+    while (entry = readdir(filename) != NULL)
+    {
+        if (strstr(entry->d_name, ".c") != NULL)
+        {
+            printf("%s,", entry->d_name);
+            count++;
+        }
+    }
+    printf("\n");
+
+    if (count == 0)
+    {
+        printf("Np .c files inside the directory!\n");
+    }
+    else
+    {
+        printf("There are %d .c files in the directory", count);
+    }
+    closedir(filename);
 }
 
 int main(int argc, char *argv[])
