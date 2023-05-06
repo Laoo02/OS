@@ -98,7 +98,7 @@ void dir_options(char filename[50], char option[10])
 
     if (pid == 0)
     {
-        printf("child process begun\n");
+        printf("**child process begun**\n");
 
         if (opendir(filename) == NULL)
         {
@@ -106,10 +106,13 @@ void dir_options(char filename[50], char option[10])
             exit(1);
         }
 
+        char filename2[50];
+        strcpy(filename2, filename);
+
         if (fork() == 0)
         {
-            FILE *f;
-            f = fopen("OS.txt", "w");
+            strcat(filename2, "_file.txt");
+            FILE *f = fopen(filename2, "w");
             fclose(f);
         }
         else
@@ -153,12 +156,12 @@ void dir_options(char filename[50], char option[10])
 
 void regFile_options(char filename[50], char option[10])
 {
-    char *p = strstr(filename, ".c");
-    if (p && (fork() == 0))
+    int s = strstr(filename, ".c");
+    if (s && (fork() == 0))
     {
         printf("this is a child process and produces a separate output!\n");
     }
-    else if (!p)
+    else if (!s)
     {
         printf("Not a reg file!\n");
     }
@@ -307,7 +310,7 @@ void no_of_cFiles(char filename[50])
     int count = 0;
     DIR *dir;
 
-    if (dir = opendir(filename) == NULL)
+    if ((dir = opendir(filename)) == NULL)
     {
         printf("Could not open the %s directory!\n", filename);
         exit(1);
@@ -324,9 +327,12 @@ void no_of_cFiles(char filename[50])
         //  p = strstr((char *)(entry->d_name), ".c");
         // free(p);
 
-        printf("%s\n", entry->d_name);
+        //  printf("%s\n", entry->d_name);
 
-        if (strstr((entry->d_name), ".c") != NULL)
+        char *ext = strrchr(entry->d_name, '.');
+
+        // if (strstr((entry->d_name), ".c") != NULL)
+        if (strcmp(ext, ".c") == 0)
         {
             // strcpy(name, entry->d_name);
             printf("%s\n", entry->d_name);
@@ -343,7 +349,7 @@ void no_of_cFiles(char filename[50])
     {
         printf("There are %d .c files in the directory", count);
     }
-    closedir(filename);
+    closedir(dir);
 }
 
 int main(int argc, char *argv[])
@@ -352,8 +358,23 @@ int main(int argc, char *argv[])
     {
         printf("Too few arguments provided!\n");
     }
-    else if (argc == 3)
-    {
-        fileType(argv[1], argv[2]);
-    }
+    else if ((argc >= 3) && (argc % 2 == 1))
+
+        for (int i = 1; i < argc; i = i + 2)
+        {
+            pid_t pid;
+            pid = fork();
+
+            if (pid < 0)
+            {
+                printf("error!\n");
+                exit(1);
+            }
+
+            if (pid == 0)
+            {
+                printf("**child process begun**\n");
+                fileType(argv[i], argv[i + 1]);
+            }
+        }
 }
