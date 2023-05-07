@@ -3,10 +3,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <sys/types.h>
 #include <time.h>
-#define _POSIX_SOURCE
+// #define _POSIX_SOURCE
 #include <dirent.h>
+#include <fcntl.h>
 
 struct stat *buf;
 // buf = malloc(sizeof(struct stat));
@@ -156,64 +158,114 @@ void dir_options(char filename[50], char option[10])
 
 void regFile_options(char filename[50], char option[10])
 {
+
+    pid_t pid, wait;
+    int ch_stat;
+
     int s = strstr(filename, ".c");
-    if (s && (fork() == 0))
+    if (s && (pid = fork() == 0))
     {
         printf("this is a child process and produces a separate output!\n");
-    }
-    else if (!s)
-    {
-        printf("Not a reg file!\n");
-    }
 
-    else
-    {
-        // struct stat *buf;
-        buf = malloc(sizeof(struct stat));
-
-        if (stat(filename, buf) < 0)
+        if (pid == 0)
         {
-            printf("Error!Cannot read file permissions!\n");
-            exit(1);
-        }
+            FILE *file = fopen(filename, "r");
 
-        for (int i = 1; i < strlen(option); i++)
-        {
-            switch (option[i])
+            if (!file)
             {
-            case 'n':
-                printf("The name is:%s\n", filename);
-                break;
-
-            case 'a':
-                permissions(buf->st_mode);
-                break;
-
-            case 'm':
-                printf("Last time the file was modified:%s", ctime(&buf->st_mtime));
-                break;
-
-            case 'h':
-                printf("The file named %s has %d hard links", filename, buf->st_nlink);
-                break;
-
-            case 'l':
-                create_SL(filename);
-                break;
-
-            case 'd':
-                printf("the file has the size: %lf bytes", (double)buf->st_size);
-                break;
-
-            default:
-                printf("invalid input!\n");
-                break;
+                printf("cannot open file!\n");
             }
-            printf("***********************************************************************\n");
+
+            /*  int err_cnt = 0, warr_cnt = 0;
+              char buf[1024];
+
+              while (fgets(buf, 1024, file) != NULL)
+              {
+              }*/
         }
 
-        free(buf);
+        else if (pid > 0)
+        {
+            wait = wait(&ch_stat);
+            if (WIFEXITED(ch_stat) != 0)
+            {
+                printf("The process with the PID %d exited with status : %d\n", wait, WEXITSTATUS(ch_stat));
+            }
+        }
+        else
+        {
+            printf("error!\n");
+        }
     }
+    else if (!s && (pid = fork() == 0))
+    {
+        //  pid_t pid, wait;
+        //   int ch_stat;
+        printf("Not a C file!\n");
+        printf("this is a child process and produces a separate output!\n");
+        if (pid == 0)
+        {
+            printf("yes.\n");
+        }
+        else if (pid > 0)
+        {
+            wait = wait(&ch_stat);
+            if (WIFEXITED(ch_stat) != 0)
+            {
+                printf("The process with the PID %d exited with status : %d\n", wait, WEXITSTATUS(ch_stat));
+            }
+        }
+        else
+        {
+            printf("error!\n");
+        }
+    }
+
+    // struct stat *buf;
+    buf = malloc(sizeof(struct stat));
+
+    if (stat(filename, buf) < 0)
+    {
+        printf("Error!Cannot read file permissions!\n");
+        exit(1);
+    }
+
+    for (int i = 1; i < strlen(option); i++)
+    {
+        switch (option[i])
+        {
+        case 'n':
+            printf("The name is:%s\n", filename);
+            break;
+
+        case 'a':
+            permissions(buf->st_mode);
+            break;
+
+        case 'm':
+            printf("Last time the file was modified:%s", ctime(&buf->st_mtime));
+            break;
+
+        case 'h':
+            printf("The file named %s has %d hard links", filename, buf->st_nlink);
+            break;
+
+        case 'l':
+            create_SL(filename);
+            break;
+
+        case 'd':
+            printf("the file has the size: %lf bytes", (double)buf->st_size);
+            break;
+
+        default:
+            printf("invalid input!\n");
+            break;
+        }
+        printf("***********************************************************************\n");
+    }
+
+    free(buf);
 }
 
 void symLnk_options(char filename[50], char option[10])
