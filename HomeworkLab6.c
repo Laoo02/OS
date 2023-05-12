@@ -419,14 +419,14 @@ int main(int argc, char *argv[])
             exit(20);
         }
 
-        if (pid1 > 0)
-        {
-            waitP = wait(&ch_stat);
-            if (WIFEXITED(ch_stat) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
-            }
-        }
+        /* if (pid1 > 0)
+         {
+             waitP = wait(&ch_stat);
+             if (WIFEXITED(ch_stat) != 0)
+             {
+                 printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
+             }
+         }*/
 
         pid2 = fork();
 
@@ -447,13 +447,15 @@ int main(int argc, char *argv[])
             exit(20);
         }
 
-        if (pid2 > 0)
+        waitP = wait(&ch_stat);
+        if (WIFEXITED(ch_stat) != 0)
         {
-            waitP2 = wait(&ch_stat2);
-            if (WIFEXITED(ch_stat2) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
-            }
+            printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
+        }
+        waitP2 = wait(&ch_stat2);
+        if (WIFEXITED(ch_stat2) != 0)
+        {
+            printf("The process with the PID %d exited with status : %d\n", waitP2, WEXITSTATUS(ch_stat));
         }
     }
 }
