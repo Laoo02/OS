@@ -26,22 +26,60 @@ void fileType(char filename[50], char option[10])
     {
         free(buf);
         printf("The file read is a regular file!\n");
-        reg_Menu(filename, option);
+        // reg_Menu(filename, option);
         regFile_options(filename, option);
     }
     else if (S_ISLNK(buf->st_mode) != 0)
     {
         printf("The file read is a symbolic link!\n");
         free(buf);
-        symLnk_Menu();
+        // symLnk_Menu();
         symLnk_options(filename, option);
     }
     else if (S_ISDIR(buf->st_mode) != 0)
     {
         printf("The file read is a directory!\n");
         free(buf);
-        dir_Menu();
+        // dir_Menu();
         dir_options(filename, option);
+    }
+    else
+    {
+        printf("undetected file type!\n");
+        free(buf);
+        exit(1);
+    }
+}
+
+void fileTypeMenu(char filename[50])
+{
+    buf = malloc(sizeof(struct stat));
+
+    if (lstat(filename, buf) < 0)
+    {
+        printf("Error!Cannot read file permissions!\n");
+        exit(1);
+    }
+    if (S_ISREG(buf->st_mode) != 0)
+    {
+        free(buf);
+        printf("The file read is a regular file!\n");
+        reg_Menu();
+        // regFile_options(filename, option);
+    }
+    else if (S_ISLNK(buf->st_mode) != 0)
+    {
+        printf("The file read is a symbolic link!\n");
+        free(buf);
+        symLnk_Menu();
+        //  symLnk_options(filename, option);
+    }
+    else if (S_ISDIR(buf->st_mode) != 0)
+    {
+        printf("The file read is a directory!\n");
+        free(buf);
+        dir_Menu();
+        // dir_options(filename, option);
     }
     else
     {
@@ -63,7 +101,7 @@ void symLnk_Menu()
     printf("***********************************************************************\n");
 }
 
-void reg_Menu(char filename[50], char option[10])
+void reg_Menu()
 {
     printf("--MENU--\n");
     printf("Options:\n");
@@ -75,7 +113,7 @@ void reg_Menu(char filename[50], char option[10])
     printf("***********************************************************************\n");
 }
 
-void dir_Menu(char filename[50], char option[10])
+void dir_Menu()
 {
     printf("--MENU--\n");
     printf("Options:\n");
@@ -89,136 +127,81 @@ void dir_Menu(char filename[50], char option[10])
 void dir_options(char filename[50], char option[10])
 {
 
-    pid_t pid;
-    pid = fork();
+    printf("**child process begun**\n");
 
-    if (pid < 0)
+    if (opendir(filename) == NULL)
     {
-        printf("error!\n");
+        printf("Could not open the %s directory!\n", filename);
         exit(1);
     }
 
-    if (pid == 0)
+    char filename2[50];
+    strcpy(filename2, filename);
+
+    strcat(filename2, "_file.txt");
+    FILE *f = fopen(filename2, "w");
+    fclose(f);
+
+    buf = malloc(sizeof(struct stat));
+
+    struct dirent *readdir(DIR * dirp);
+
+    for (int i = 1; i < strlen(option); i++)
     {
-        printf("**child process begun**\n");
-
-        if (opendir(filename) == NULL)
+        switch (option[i])
         {
-            printf("Could not open the %s directory!\n", filename);
-            exit(1);
+        case 'n':
+            printf("The name is:%s\n", filename);
+            break;
+
+        case 'a':
+            permissions(buf->st_mode);
+            break;
+
+        case 'c':
+            no_of_cFiles(filename);
+            break;
+
+        case 'd':
+            printf("the file has the size: %lf bytes", (double)buf->st_size);
+            break;
+
+        default:
+            printf("invalid input!\n");
+            break;
         }
-
-        char filename2[50];
-        strcpy(filename2, filename);
-
-        if (fork() == 0)
-        {
-            strcat(filename2, "_file.txt");
-            FILE *f = fopen(filename2, "w");
-            fclose(f);
-        }
-        else
-        {
-
-            buf = malloc(sizeof(struct stat));
-
-            struct dirent *readdir(DIR * dirp);
-
-            for (int i = 1; i < strlen(option); i++)
-            {
-                switch (option[i])
-                {
-                case 'n':
-                    printf("The name is:%s\n", filename);
-                    break;
-
-                case 'a':
-                    permissions(buf->st_mode);
-                    break;
-
-                case 'c':
-                    no_of_cFiles(filename);
-                    break;
-
-                case 'd':
-                    printf("the file has the size: %lf bytes", (double)buf->st_size);
-                    break;
-
-                default:
-                    printf("invalid input!\n");
-                    break;
-                }
-                printf("***********************************************************************\n");
-            }
-            closedir(filename);
-            free(buf);
-        }
+        printf("***********************************************************************\n");
     }
+    closedir(filename);
+    free(buf);
 }
 
 void regFile_options(char filename[50], char option[10])
 {
 
-    pid_t pid, wait;
-    int ch_stat;
-
     int s = strstr(filename, ".c");
-    if (s && (pid = fork() == 0))
+    // printf("s value:%d\n", s);
+    if (s)
     {
-        printf("this is a child process and produces a separate output!\n");
+        printf("it is a C file!\n");
+        // printf("this is a child process and produces a separate output!\n");
 
-        if (pid == 0)
+        // open +
+        FILE *file = fopen(filename, "r");
+
+        if (!file)
         {
-            FILE *file = fopen(filename, "r");
-
-            if (!file)
-            {
-                printf("cannot open file!\n");
-            }
-
-            /*  int err_cnt = 0, warr_cnt = 0;
-              char buf[1024];
-
-              while (fgets(buf, 1024, file) != NULL)
-              {
-              }*/
+            printf("cannot open file!\n");
         }
 
-        else if (pid > 0)
-        {
-            wait = wait(&ch_stat);
-            if (WIFEXITED(ch_stat) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", wait, WEXITSTATUS(ch_stat));
-            }
-        }
-        else
-        {
-            printf("error!\n");
-        }
+        close(filename);
     }
-    else if (!s && (pid = fork() == 0))
+
+    else if (!s)
     {
         //  pid_t pid, wait;
         //   int ch_stat;
         printf("Not a C file!\n");
-        printf("this is a child process and produces a separate output!\n");
-        if (pid == 0)
-        {
-            printf("yes.\n");
-        }
-        else if (pid > 0)
-        {
-            wait = wait(&ch_stat);
-            if (WIFEXITED(ch_stat) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", wait, WEXITSTATUS(ch_stat));
-            }
-        }
-        else
-        {
-            printf("error!\n");
-        }
     }
 
     // struct stat *buf;
@@ -376,7 +359,7 @@ void no_of_cFiles(char filename[50])
 
     while ((entry = readdir(dir)) != NULL)
     {
-        //  p = strstr((char *)(entry->d_name), ".c");
+        int p = strstr((char *)(entry->d_name), ".c");
         // free(p);
 
         //  printf("%s\n", entry->d_name);
@@ -406,27 +389,73 @@ void no_of_cFiles(char filename[50])
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3)
+
+    if (argc < 2)
     {
         printf("Too few arguments provided!\n");
     }
-    else if ((argc >= 3) && (argc % 2 == 1))
 
-        for (int i = 1; i < argc; i = i + 2)
+    for (int i = 1; i < argc; i++)
+    {
+
+        pid_t pid1, pid2, waitP, waitP2;
+        int ch_stat, ch_stat2;
+        //  char variables[10];
+
+        pid1 = fork();
+
+        if (pid1 < 0)
         {
-            pid_t pid;
-            pid = fork();
+            printf("error!\n");
+            exit(1);
+        }
 
-            if (pid < 0)
-            {
-                printf("error!\n");
-                exit(1);
-            }
+        if (pid1 == 0)
+        {
+            //  printf("enter the options to be used:\n");
+            // scanf("%s", variables);
+            printf("**child process No1 begun**\n");
+            fileTypeMenu(argv[i]);
+            exit(20);
+        }
 
-            if (pid == 0)
+        if (pid1 > 0)
+        {
+            waitP = wait(&ch_stat);
+            if (WIFEXITED(ch_stat) != 0)
             {
-                printf("**child process begun**\n");
-                fileType(argv[i], argv[i + 1]);
+                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
             }
         }
+
+        pid2 = fork();
+
+        if (pid2 < 0)
+        {
+            printf("error!\n");
+            exit(1);
+        }
+
+        if (pid2 == 0)
+        {
+            printf("**child process No2 begun**\n");
+            char variables[10];
+            printf("enter the options to be used:\n");
+            scanf("%s", variables);
+            printf("**child process begun**\n");
+            fileType(argv[i], variables);
+            exit(20);
+        }
+
+        if (pid2 > 0)
+        {
+            waitP2 = wait(&ch_stat2);
+            if (WIFEXITED(ch_stat2) != 0)
+            {
+                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
+            }
+        }
+    }
 }
+// dup2 for it (redirecting file descriptor to write the end of pipe)
+// use pipes
