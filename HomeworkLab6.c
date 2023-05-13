@@ -10,6 +10,9 @@
 #include <dirent.h>
 #include <fcntl.h>
 
+int fd[2];
+char buffer[1024];
+
 struct stat *buf;
 // buf = malloc(sizeof(struct stat));
 
@@ -127,7 +130,7 @@ void dir_Menu()
 void dir_options(char filename[50], char option[10])
 {
 
-    printf("**child process begun**\n");
+    //  printf("**child process begun**\n");
 
     if (opendir(filename) == NULL)
     {
@@ -139,8 +142,22 @@ void dir_options(char filename[50], char option[10])
     strcpy(filename2, filename);
 
     strcat(filename2, "_file.txt");
-    FILE *f = fopen(filename2, "w");
-    fclose(f);
+    int file = open(filename2, O_RDONLY | O_CREAT);
+
+    if (file < 0)
+    {
+        perror("cannot open/create file!\n");
+        exit(1);
+    }
+
+    printf("text file created!\n");
+
+    if (close(file) < 0)
+    {
+        perror("cannot close file!\n");
+        exit(1);
+    }
+    printf("file closed!\n");
 
     buf = malloc(sizeof(struct stat));
 
@@ -178,31 +195,6 @@ void dir_options(char filename[50], char option[10])
 
 void regFile_options(char filename[50], char option[10])
 {
-
-    int s = strstr(filename, ".c");
-    // printf("s value:%d\n", s);
-    if (s)
-    {
-        printf("it is a C file!\n");
-        // printf("this is a child process and produces a separate output!\n");
-
-        // open +
-        FILE *file = fopen(filename, "r");
-
-        if (!file)
-        {
-            printf("cannot open file!\n");
-        }
-
-        close(filename);
-    }
-
-    else if (!s)
-    {
-        //  pid_t pid, wait;
-        //   int ch_stat;
-        printf("Not a C file!\n");
-    }
 
     // struct stat *buf;
     buf = malloc(sizeof(struct stat));
@@ -249,6 +241,30 @@ void regFile_options(char filename[50], char option[10])
     }
 
     free(buf);
+
+    int s = strstr(filename, ".c");
+    // printf("s value:%d\n", s);
+    if (s)
+    {
+        printf("it is a C file!\n");
+
+        close(fd[0]);
+        dup2(fd[1], 1);
+
+        // execlp("bash", "bash", "bash_proc.bash", filename, NULL);
+        // perror("Cannot execute command!\n");
+        // exit(1);
+    }
+
+    else if (!s)
+    {
+        // close(fd[0]);
+        // dup2(fd[1], 1);
+        printf("Not a C file!\n");
+        //  execl("usr/bin/wc", "wc", "-'l", filename, NULL);
+        // perror("Cannot execute command!\n");
+        // exit(1);
+    }
 }
 
 void symLnk_options(char filename[50], char option[10])
@@ -389,6 +405,11 @@ void no_of_cFiles(char filename[50])
 
 int main(int argc, char *argv[])
 {
+    /* if (pipe(fd) == -1)
+     {
+         printf("cannot create pipe!\n");
+         exit(1);
+     }*/
 
     if (argc < 2)
     {
@@ -412,20 +433,9 @@ int main(int argc, char *argv[])
 
         if (pid1 == 0)
         {
-            //  printf("enter the options to be used:\n");
-            // scanf("%s", variables);
             printf("**child process No1 begun**\n");
             fileTypeMenu(argv[i]);
             exit(20);
-        }
-
-        if (pid1 > 0)
-        {
-            waitP = wait(&ch_stat);
-            if (WIFEXITED(ch_stat) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
-            }
         }
 
         pid2 = fork();
@@ -447,15 +457,18 @@ int main(int argc, char *argv[])
             exit(20);
         }
 
-        if (pid2 > 0)
+        waitP = wait(&ch_stat);
+        if (WIFEXITED(ch_stat) != 0)
         {
-            waitP2 = wait(&ch_stat2);
-            if (WIFEXITED(ch_stat2) != 0)
-            {
-                printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
-            }
+            printf("The process with the PID %d exited with status : %d\n", waitP, WEXITSTATUS(ch_stat));
         }
+        waitP2 = wait(&ch_stat2);
+        if (WIFEXITED(ch_stat2) != 0)
+        {
+            printf("The process with the PID %d exited with status : %d\n", waitP2, WEXITSTATUS(ch_stat));
+        }
+
+        // close(fd[1]);
+        // read(fd[0], buffer, 1024);
     }
 }
-// dup2 for it (redirecting file descriptor to write the end of pipe)
-// use pipes
